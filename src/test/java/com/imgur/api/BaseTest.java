@@ -25,7 +25,7 @@ public abstract class BaseTest {
     }
 
     private static void loadProperties() throws IOException {
-        properties.load(new FileInputStream("src/test/resources/application.properties"));
+        properties.load(new FileInputStream("src/test/java/resources/application.properties"));
     }
 
 }
