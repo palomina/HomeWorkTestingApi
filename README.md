@@ -1,6 +1,15 @@
-#Homework 5 Morozova
+#Homework 6 Morozova
+##Настройка
+1. Переименовать
 
-Тест-кейсы:
+        /src/main/resources/generatorConfig.xml-default -> /src/main/resources/generatorConfig.xml
+        /src/main/resources/mybatisConfig.xml-default -> /src/main/resources/mybatisConfig.xml
+        /src/test/resources/application.properties-default -> /src/test/resources/application.properties
+
+2. Прописать параметры доступа к БД
+
+
+##Тест-кейсы:
 - Получить список продуктов
 - Создать продукт
 - Создать продукт c указанным id

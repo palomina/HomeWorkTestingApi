@@ -14,7 +14,12 @@ import ru.geekbrains.base.enums.CategoryType;
 import ru.geekbrains.base.enums.ResponseCode;
 import ru.geekbrains.dto.ErrorBody;
 import ru.geekbrains.dto.Product;
+import ru.geekbrains.java4.lesson6.db.dao.CategoriesMapper;
+import ru.geekbrains.java4.lesson6.db.dao.ProductsMapper;
+import ru.geekbrains.java4.lesson6.db.model.Categories;
+import ru.geekbrains.java4.lesson6.db.model.Products;
 import ru.geekbrains.service.ProductService;
+import ru.geekbrains.util.DbUtils;
 import ru.geekbrains.util.RetrofitUtils;
 
 import java.io.IOException;
@@ -28,11 +33,17 @@ public class ProductTests {
     static ProductService productService;
     Product product;
 
+    static CategoriesMapper categoriesMapper;
+    static ProductsMapper productsMapper;
+
     @SneakyThrows
     @BeforeAll
     static void beforeAll() {
         productService = RetrofitUtils.getRetrofit()
                 .create(ProductService.class);
+
+        categoriesMapper = DbUtils.getCategoriesMapper();
+        productsMapper = DbUtils.getProductsMapper();
     }
 
     @BeforeEach
@@ -74,6 +85,10 @@ public class ProductTests {
                         .execute();
         productId = response.body().getId();
         assertThat(response.isSuccessful()).isTrue();
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        assertThat(dbProduct.getTitle()).isEqualTo(product.getTitle());
+        assertThat((double) dbProduct.getPrice()).isEqualTo(product.getPrice());
     }
 
     @SneakyThrows
@@ -110,18 +125,26 @@ public class ProductTests {
         assertThat(getProductResponse.body().getTitle()).isEqualTo(p.getTitle());
         assertThat(getProductResponse.body().getPrice()).isEqualTo(p.getPrice());
         assertThat(getProductResponse.body().getCategoryTitle()).isEqualTo(p.getCategoryTitle());
+
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        Categories dbCategory = categoriesMapper.selectByPrimaryKey(dbProduct.getCategory_id());
+
+        assertThat(dbProduct.getTitle()).isEqualTo(p.getTitle());
+        assertThat((double) dbProduct.getPrice()).isEqualTo(p.getPrice());
+        assertThat(dbCategory.getTitle()).isEqualTo(p.getCategoryTitle());
     }
 
     @SneakyThrows
     @Test
     void createProductWithSqlInjectionTest() {
-        Product product = new Product()
+        Product p = new Product()
                 .withCategoryTitle(CategoryType.FOOD.getTitle())
                 .withPrice(1)
-                .withTitle("(SELECT 999)");
+                .withTitle("(SELECT pg_sleep(60))");
 
         retrofit2.Response<Product> response =
-                productService.createProduct(product)
+                productService.createProduct(p)
                         .execute();
         productId = response.body().getId();
         assertThat(response.isSuccessful()).isTrue();
@@ -131,9 +154,16 @@ public class ProductTests {
                         .execute();
         assertThat(response.code()).isEqualTo(ResponseCode.OK_CREATED);
         assertThat(response.isSuccessful()).isTrue();
-        assertThat(getProductResponse.body().getTitle()).isEqualTo(product.getTitle());
-        assertThat(getProductResponse.body().getPrice()).isEqualTo(product.getPrice());
-        assertThat(getProductResponse.body().getCategoryTitle()).isEqualTo(product.getCategoryTitle());
+        assertThat(getProductResponse.body().getTitle()).isEqualTo(p.getTitle());
+        assertThat(getProductResponse.body().getPrice()).isEqualTo(p.getPrice());
+        assertThat(getProductResponse.body().getCategoryTitle()).isEqualTo(p.getCategoryTitle());
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        Categories dbCategory = categoriesMapper.selectByPrimaryKey(dbProduct.getCategory_id());
+
+        assertThat(dbProduct.getTitle()).isEqualTo(p.getTitle());
+        assertThat((double) dbProduct.getPrice()).isEqualTo(p.getPrice());
+        assertThat(dbCategory.getTitle()).isEqualTo(p.getCategoryTitle());
     }
 
     @SneakyThrows
@@ -153,9 +183,15 @@ public class ProductTests {
         retrofit2.Response<Product> updatedProduct =
                 productService.updateProduct(product)
                         .execute();
+
         assertThat(updatedProduct.code()).isEqualTo(ResponseCode.OK);
         assertThat(updatedProduct.isSuccessful()).isTrue();
         assertThat(updatedProduct.body()).isEqualTo(product);
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        assertThat((long) dbProduct.getId()).isEqualTo((long) product.getId());
+        assertThat(dbProduct.getTitle()).isEqualTo(product.getTitle());
+        assertThat((double)dbProduct.getPrice()).isEqualTo((double)product.getPrice());
     }
 
     @SneakyThrows
@@ -165,17 +201,26 @@ public class ProductTests {
                 productService.createProduct(product)
                         .execute();
         productId = response.body().getId();
-        assertThat(response.code()).isEqualTo(ResponseCode.OK);
+        assertThat(response.code()).isGreaterThanOrEqualTo(ResponseCode.OK);
+        assertThat(response.code()).isLessThanOrEqualTo(ResponseCode.OK_LAST);
         assertThat(response.isSuccessful()).isTrue();
 
         retrofit2.Response<Product> getProductResponse =
                 productService.getProduct(productId)
                         .execute();
-        assertThat(getProductResponse.code()).isEqualTo(ResponseCode.OK);
+        assertThat(getProductResponse.code()).isGreaterThanOrEqualTo(ResponseCode.OK);
+        assertThat(getProductResponse.code()).isLessThanOrEqualTo(ResponseCode.OK_LAST);
         assertThat(getProductResponse.isSuccessful()).isTrue();
         assertThat(getProductResponse.body().getTitle()).isEqualTo(product.getTitle());
         assertThat(getProductResponse.body().getPrice()).isEqualTo(product.getPrice());
         assertThat(getProductResponse.body().getCategoryTitle()).isEqualTo(product.getCategoryTitle());
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        Categories dbCategory = categoriesMapper.selectByPrimaryKey(dbProduct.getCategory_id());
+
+        assertThat(dbProduct.getTitle()).isEqualTo(getProductResponse.body().getTitle());
+        assertThat((double) dbProduct.getPrice()).isEqualTo((double) getProductResponse.body().getPrice());
+        assertThat(dbCategory.getTitle()).isEqualTo(getProductResponse.body().getCategoryTitle());
     }
 
     @SneakyThrows
@@ -194,6 +239,9 @@ public class ProductTests {
             ErrorBody errorBody = converter.convert(body);
             assertThat(errorBody.getMessage()).isEqualTo("Unable to find product with id: " + invalidId);
         }
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) invalidId);
+        assertThat(dbProduct).isNull();
     }
 
     @SneakyThrows
@@ -215,8 +263,9 @@ public class ProductTests {
     @SneakyThrows
     @Test
     void getProductWithVeryLongIdTest() {
+        String longId = "999999999999999999999999999999999999";
         retrofit2.Response<Product> response =
-                productService.getProduct("999999999999999999999999999999999999")
+                productService.getProduct(longId)
                         .execute();
         assertThat(response.code()).isEqualTo(ResponseCode.BAD_REQUEST);
         assertThat(response.isSuccessful()).isFalse();
@@ -245,17 +294,24 @@ public class ProductTests {
         assertThat(deleteResponse.code()).isEqualTo(ResponseCode.OK);
         assertThat(deleteResponse.isSuccessful()).isTrue();
 
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        assertThat(dbProduct).isNull();
+
         productId = null;
     }
 
     @SneakyThrows
     @Test
     void deleteUnknownProductTest() {
+        int unknownId = -1;
         retrofit2.Response<ResponseBody> deleteResponse =
-                productService.deleteProduct(-1)
+                productService.deleteProduct(unknownId)
                         .execute();
         assertThat(deleteResponse.code()).isEqualTo(ResponseCode.NOT_FOUND);
         assertThat(deleteResponse.isSuccessful()).isTrue();
+
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) unknownId);
+        assertThat(dbProduct).isNull();
     }
 
     @SneakyThrows
@@ -267,11 +323,9 @@ public class ProductTests {
         productId = response.body().getId();
         assertThat(response.isSuccessful()).isTrue();
 
-        retrofit2.Response<ResponseBody> deleteResponse =
-                productService.deleteProduct(productId)
-                        .execute();
-        assertThat(deleteResponse.code()).isEqualTo(ResponseCode.OK);
-        assertThat(deleteResponse.isSuccessful()).isTrue();
+        Products dbProduct = productsMapper.selectByPrimaryKey((long) productId);
+        assertThat(dbProduct).isNotNull();
+        productsMapper.deleteByPrimaryKey(dbProduct.getId());
 
         retrofit2.Response<ResponseBody> deleteResponse2 =
                 productService.deleteProduct(productId)
