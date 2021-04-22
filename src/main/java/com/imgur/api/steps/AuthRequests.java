@@ -27,9 +27,9 @@ public class AuthRequests {
 
     public static void setProperties(Properties properties) {
         AuthRequests.properties = properties;
-        token = properties.getProperty("token");
-        username = properties.getProperty("username");
-        clientId = properties.getProperty("clientId");
+        token = properties.getProperty("token", System.getProperty("TOKEN", System.getenv("TOKEN")));
+        username = properties.getProperty("username", System.getProperty("USERNAME", System.getenv("USERNAME")));
+        clientId = properties.getProperty("clientId", System.getProperty("CLIENT_ID", System.getenv("CLIENT_ID")));
     }
 
     public static RequestSpecification authorization()

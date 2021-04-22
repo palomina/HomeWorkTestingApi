@@ -8,13 +8,11 @@ import com.imgur.api.steps.Responses;
 import com.imgur.api.steps.UnAuthRequests;
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Story;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,6 +22,7 @@ import java.util.Properties;
 import static io.restassured.RestAssured.given;
 
 
+@DisplayName("Тестирование изображений")
 public class ImageTests extends BaseTest {
     private static String imageHash;
     private static String imageDeleteHash;
@@ -33,7 +32,8 @@ public class ImageTests extends BaseTest {
         Properties properties = new Properties();
         properties.load(new FileInputStream(Files.PROPERTIES));
 
-        RestAssured.baseURI = properties.getProperty("base.url");
+        RestAssured.baseURI = properties.getProperty("base.url", System.getProperty("BASE_URL", System.getenv("BASE_URL")));
+
         RestAssured.filters(new AllureRestAssured());
 
         AuthRequests.setProperties(properties);
@@ -59,13 +59,15 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка base64")
+    @DisplayName("Загрузка base64")
     void tc01UploadBase64Test() {
         imageDeleteHash = UnAuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getDeletehash();
     }
-
+/*
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка по url")
+    @DisplayName("Загрузка по url")
     void tc02UploadFromUrlTest() {
         imageDeleteHash = UnAuthRequests.uploadImageFromUrl(Files.IMG_URL).getData().getDeletehash();
     }
@@ -73,6 +75,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка по пустого url")
+    @DisplayName("Загрузка по пустого url")
     void tc03UploadEmptyUrlTest() {
         UnAuthRequests.uploadEmptyData(UploadType.URL);
     }
@@ -80,6 +83,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка по пустого base64")
+    @DisplayName("Загрузка по пустого base64")
     void tc04UploadEmptyBase64Test() {
         UnAuthRequests.uploadEmptyData(UploadType.BASE64);
     }
@@ -87,6 +91,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка по неизвестного type")
+    @DisplayName("Загрузка по неизвестного type")
     void tc05UploadInvalidTypeTest() {
         UnAuthRequests.uploadEmptyData(UploadType.UNKNOWN);
     }
@@ -94,6 +99,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка по битого base64")
+    @DisplayName("Загрузка по битого base64")
     void tc06UploadBrokenBase64Test() {
         CommonRequests.invalidUpload(UploadType.BASE64, "broken", UnAuthRequests.authorization(), Responses.error());
     }
@@ -101,6 +107,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка с неправильным Client-ID")
+    @DisplayName("Загрузка с неправильным Client-ID")
     void tc07UploadWithInvalidClientIdTest() {
         CommonRequests.invalidUpload(
                 UploadType.URL,
@@ -113,6 +120,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка без Client-ID")
+    @DisplayName("Загрузка без Client-ID")
     void tc08UploadWithoutClientIdTest() {
         CommonRequests.invalidUpload(
                 UploadType.URL,
@@ -125,6 +133,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Обновление данных избражения")
+    @DisplayName("Обновление данных избражения")
     void tc09UpdateImageInfoTest() {
         String title = "title";
         String description = "description";
@@ -164,6 +173,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Загрузка base64")
+    @DisplayName("Загрузка base64")
     void tc10UploadBase64Test() {
         imageHash = AuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getId();
     }
@@ -171,6 +181,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Загрузка по url")
+    @DisplayName("Загрузка по url")
     void tc11UploadFromUrlTest() {
         imageHash = AuthRequests.uploadImageFromUrl(Files.IMG_URL).getData().getId();
     }
@@ -178,6 +189,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Добавление в список Favorite")
+    @DisplayName("Добавление в список Favorite")
     void tc12AddToFavoriteTest() {
         imageHash = AuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getId();
         AuthRequests.requestAddToFavorite(imageHash);
@@ -187,6 +199,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Удаление из списка Favorite")
+    @DisplayName("Удаление из списка Favorite")
     void tc13RemoveFromFavoriteTest() {
         imageHash = AuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getId();
         AuthRequests.requestAddToFavorite(imageHash);
@@ -198,6 +211,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Добавление в список Favorite с инвалидным токеном")
+    @DisplayName("Добавление в список Favorite с инвалидным токеном")
     void tc14AddToFavoriteWithInvalidTokenTest() {
         imageHash = AuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getId();
 
@@ -211,6 +225,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Обновление данных избражения")
+    @DisplayName("Обновление данных избражения")
     void tc15UpdateImageInfoTest() {
         String title = "title";
         String description = "description";
@@ -249,6 +264,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Удаление несуществующего изображения")
+    @DisplayName("Удаление несуществующего изображения")
     void tc16DeleteNotExistingImageTest() {
         AuthRequests.imageDelete("invalid", Responses.error());
     }
@@ -256,6 +272,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Загрузка не изображения")
+    @DisplayName("Загрузка не изображения")
     void tc17UploadNotImageFileTest() {
          CommonRequests.invalidUpload(UploadType.FILE, new File(Files.TXT_FILE_PATH), AuthRequests.authorization(), Responses.error());
     }
@@ -263,6 +280,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Загрузка файла")
+    @DisplayName("Загрузка файла")
     void tc18UploadFileTest() {
         imageHash = AuthRequests.upload(new File(Files.IMG_FILE_PATH)).getData().getId();
     }
@@ -270,6 +288,7 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Проверка количетсва изображений")
+    @DisplayName("Проверка количетсва изображений")
     void tc19ImagesCountTest() {
         int imageCountBefore = AuthRequests.requestImageCount();
 
@@ -283,11 +302,12 @@ public class ImageTests extends BaseTest {
     @Test
     @Feature("Авторизованные запросы")
     @Description("Проверка ids изображений")
+    @DisplayName("Проверка ids изображений")
     void tc20ImageIdsTest() {
         imageHash = AuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getId();
 
         Assertions.assertEquals(imageHash, AuthRequests.requestImageIds().getData().get(0));
     }
 
-
+*/
 }

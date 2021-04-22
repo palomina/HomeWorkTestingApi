@@ -26,8 +26,8 @@ public class UnAuthRequests {
 
     public static void setProperties(Properties properties) {
         UnAuthRequests.properties = properties;
-        username = properties.getProperty("username");
-        clientId = properties.getProperty("clientId");
+        username = properties.getProperty("username", System.getProperty("USERNAME", System.getenv("USERNAME")));
+        clientId = properties.getProperty("clientId", System.getProperty("CLIENT_ID", System.getenv("CLIENT_ID")));
     }
 
     public static RequestSpecification authorization()
