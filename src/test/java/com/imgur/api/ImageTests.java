@@ -63,7 +63,7 @@ public class ImageTests extends BaseTest {
     void tc01UploadBase64Test() {
         imageDeleteHash = UnAuthRequests.uploadImageFromBase64(Files.IMG_FILE_PATH).getData().getDeletehash();
     }
-/*
+
     @Test
     @Feature("Неавторизованные запросы")
     @Description("Загрузка по url")
@@ -309,5 +309,4 @@ public class ImageTests extends BaseTest {
         Assertions.assertEquals(imageHash, AuthRequests.requestImageIds().getData().get(0));
     }
 
-*/
 }
